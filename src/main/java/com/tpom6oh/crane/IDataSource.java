@@ -1,9 +1,5 @@
 package com.tpom6oh.crane;
 
-import android.app.Activity;
-import android.content.Context;
-
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -17,4 +13,8 @@ public interface IDataSource {
     void putPassword(String host, String password);
 
     String getPassword(String host);
+
+    void setPersistentPasswordHash(String passwordHash);
+
+    String getPersistentPasswordHash();
 }

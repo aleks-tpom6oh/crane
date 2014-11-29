@@ -7,8 +7,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
 import android.widget.Toast;
+import com.afollestad.materialdialogs.MaterialDialog;
+import com.afollestad.materialdialogs.Theme;
 
+import javax.inject.Inject;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -17,10 +21,38 @@ import java.net.URL;
 
 public class HolderActivity extends Activity {
 
+    @Inject
+    CryptUtils cryptUtils;
+    @Inject
+    IDataSource dataSource;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        ((Injector)getApplication()).inject(this);
+
+        if (dataSource.getPersistentPasswordHash() != null)
+        {
+            String userPassword = ((CraneApplication) getApplication()).getUserPassword();
+            if (userPassword == null)
+            {
+                askForPassword(savedInstanceState);
+            }
+            else 
+            {
+                mainProcess(savedInstanceState);
+            }
+        }
+        else
+        {
+            askToSetPassword();
+        }
+    }
+
+    private void mainProcess(Bundle savedInstanceState)
+    {
         if (checkIntent()) {
             return;
         }
@@ -33,6 +65,64 @@ public class HolderActivity extends Activity {
         }
     }
 
+    @Override
+    protected void onResume()
+    {
+        super.onResume();
+    }
+
+    private void askToSetPassword()
+    {
+        final EditText passwordEditText = new EditText(this);
+        new MaterialDialog.Builder(this)
+                .title("Set password to protect your data")
+                .customView(passwordEditText)
+                .theme(Theme.LIGHT)  // the default is light, so you don't need this line
+                .positiveText("Go")
+                .callback(new MaterialDialog.SimpleCallback()
+                {
+                    @Override
+                    public void onPositive(MaterialDialog dialog)
+                    {
+                        String passHash = cryptUtils.hash(passwordEditText.getText().toString());
+                        ((CraneApplication)getApplication()).setUserPassword(passHash);
+                        dataSource.setPersistentPasswordHash(passHash);
+                    }
+                })
+                .cancelable(false)
+                .show();
+    }
+
+    private void askForPassword(final Bundle savedInstanceState)
+    {
+        final EditText passwordEditText = new EditText(this);
+        new MaterialDialog.Builder(this)
+                .title("Type your password to access the application")
+                .customView(passwordEditText)
+                .theme(Theme.LIGHT)  // the default is light, so you don't need this line
+                .positiveText("Go")
+                .callback(new MaterialDialog.SimpleCallback()
+                {
+                    @Override
+                    public void onPositive(MaterialDialog dialog)
+                    {
+                        String hash = dataSource.getPersistentPasswordHash();
+                        String passHash = cryptUtils.hash(passwordEditText.getText().toString());
+                        if (!passHash.equals(hash))
+                        {
+                            askForPassword(savedInstanceState);
+                        }
+                        else
+                        {
+                            ((CraneApplication)getApplication()).setUserPassword(passHash);
+                            mainProcess(savedInstanceState);
+                        }
+                    }
+                })
+                .cancelable(false)
+                .show();
+    }
+
     private boolean checkIntent() {
         Intent intent = getIntent();
         String action = intent.getAction();
@@ -40,14 +130,13 @@ public class HolderActivity extends Activity {
 
         if (Intent.ACTION_SEND.equals(action) && type != null) {
             if ("text/plain".equals(type)) {
-                PreferencesDataSource preferencesDataSource = new PreferencesDataSource(this);
                 String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);
                 try {
                     URL u = new URL(sharedText); // this would check for the protocol
                     URI uri = u.toURI();
                     if (sharedText != null) {
                         String host = uri.getHost();
-                        String password = preferencesDataSource.getPassword(host);
+                        String password = dataSource.getPassword(host);
                         if (password != null) {
                             ClipboardManager clipboard =
                                     (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);

@@ -1,13 +1,10 @@
 package com.tpom6oh.crane;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.prefs.Preferences;
 
 /**
  * Created by alx on 12.10.14.
@@ -16,6 +13,7 @@ public class PreferencesDataSource implements IDataSource {
 
     private static final String PREFERENCES_TAG = "Hosts shared preferences";
     private static final String HOSTS_TAG = "Hosts";
+    private static final String PASSWORD_HASH_TAG = "PASSWORD";
 
     private SharedPreferences sharedPreferences;
 
@@ -33,7 +31,7 @@ public class PreferencesDataSource implements IDataSource {
         Set<String> hosts = getHostsData();
         hosts.add(host);
 
-        sharedPreferences.edit().putStringSet(HOSTS_TAG, hosts).commit();
+        sharedPreferences.edit().putStringSet(HOSTS_TAG, hosts).apply();
     }
 
     @Override
@@ -42,7 +40,7 @@ public class PreferencesDataSource implements IDataSource {
             addHost(host);
         }
 
-        sharedPreferences.edit().putString(host, password).commit();
+        sharedPreferences.edit().putString(host, password).apply();
     }
 
     private SharedPreferences getPrefs(Context context) {
@@ -56,5 +54,17 @@ public class PreferencesDataSource implements IDataSource {
     @Override
     public String getPassword(String host) {
         return sharedPreferences.getString(host, null);
+    }
+
+    @Override
+    public void setPersistentPasswordHash(String passwordHash)
+    {
+        sharedPreferences.edit().putString(PASSWORD_HASH_TAG, passwordHash).apply();
+    }
+
+    @Override
+    public String getPersistentPasswordHash()
+    {
+        return sharedPreferences.getString(PASSWORD_HASH_TAG, null);
     }
 }

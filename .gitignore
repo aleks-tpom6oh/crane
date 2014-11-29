@@ -1,0 +1,7 @@
+/build
+/.idea
+app.iml
+crane.iml
+local.properties
+gradlew.bat
+/.gradle
