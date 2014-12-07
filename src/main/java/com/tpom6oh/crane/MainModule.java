@@ -14,7 +14,8 @@ import javax.inject.Singleton;
         library = true,
         injects = {
                 CraneApplication.class,
-                HolderActivity.class
+                HolderActivity.class,
+                SetPasswordActivity.class
         }
 )
 public class MainModule

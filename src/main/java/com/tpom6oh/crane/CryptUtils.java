@@ -32,7 +32,7 @@ public class CryptUtils
         }
     }
 
-    public static String md5(String input)
+    public String md5(String input)
     {
         String md5 = null;
 

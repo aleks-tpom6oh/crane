@@ -40,7 +40,7 @@ public class HolderActivity extends Activity {
             {
                 askForPassword(savedInstanceState);
             }
-            else 
+            else
             {
                 mainProcess(savedInstanceState);
             }
@@ -136,8 +136,10 @@ public class HolderActivity extends Activity {
                     URI uri = u.toURI();
                     if (sharedText != null) {
                         String host = uri.getHost();
-                        String password = dataSource.getPassword(host);
-                        if (password != null) {
+                        String encryptedPassword = dataSource.getPassword(host);
+                        if (encryptedPassword != null) {
+                            String password = cryptUtils.decrypt(((CraneApplication)getApplication()).getUserPassword(),
+                                                                 encryptedPassword);
                             ClipboardManager clipboard =
                                     (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
                             ClipData clip = ClipData.newPlainText("label", password);
@@ -150,10 +152,7 @@ public class HolderActivity extends Activity {
                         }
                     }
                     finish();
-                } catch (URISyntaxException e) {
-                    Toast.makeText(this, "Not a valid url", Toast.LENGTH_SHORT).show();
-                    finish();
-                } catch (MalformedURLException e) {
+                } catch (URISyntaxException | MalformedURLException e) {
                     Toast.makeText(this, "Not a valid url", Toast.LENGTH_SHORT).show();
                     finish();
                 }
